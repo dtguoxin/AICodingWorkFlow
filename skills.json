@@ -1,0 +1,47 @@
+{
+  "name": "ai-coding-workflow",
+  "version": "2.0.0",
+  "description": "六阶段 AI 辅助开发工作流 Skill 集合 — 需求分析 → 技术设计 → 任务计划 → 代码实现 → 测试验证 → 代码审查",
+  "skills": [
+    {
+      "name": "ai-workspace-init",
+      "path": "skills/ai-workspace-init",
+      "description": "项目级工作区初始化：自动感知技术栈、生成架构基线、创建动态模板"
+    },
+    {
+      "name": "requirement-analysis",
+      "path": "skills/requirement-analysis",
+      "description": "需求分析与子需求分解：解析需求文档、生成分析报告、拆分可分配子需求"
+    },
+    {
+      "name": "technical-design",
+      "path": "skills/technical-design",
+      "description": "技术方案设计：架构基线管理、子需求详细设计文档生成"
+    },
+    {
+      "name": "task-plan",
+      "path": "skills/task-plan",
+      "description": "任务计划生成：基于技术设计文档制定可执行任务清单"
+    },
+    {
+      "name": "implementation",
+      "path": "skills/implementation",
+      "description": "代码实现：按任务计划执行编码，生成变更摘要并经人工确认后写入"
+    },
+    {
+      "name": "testing",
+      "path": "skills/testing",
+      "description": "测试验证：基于验收准则生成并执行测试用例，验证实现正确性"
+    },
+    {
+      "name": "code-review",
+      "path": "skills/code-review",
+      "description": "代码审查：自动化检查 + AI 审查 + 人工终审，输出分级审查报告"
+    },
+    {
+      "name": "ai-coding-workflow",
+      "path": "skills/ai-coding-workflow",
+      "description": "工作流状态管理：查询需求状态、检查前置条件、推荐下一步操作"
+    }
+  ]
+}
