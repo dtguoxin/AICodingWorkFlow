@@ -1,7 +1,7 @@
 {
   "name": "@codingdev/skills",
   "version": "1.0.0",
-  "description": "Qoder Skills CLI - Install and manage AI Coding Workflow skills",
+  "description": "AI Coding Workflow Skills CLI - Install and manage workflow skills from Git repositories",
   "main": "lib/index.js",
   "bin": {
     "skills": "bin/skills.js"
