@@ -111,9 +111,38 @@ Determine how the requirement was provided and ensure it is persisted in the sha
 
 ### Step 3: Parse Raw Document
 
-1. Read the requirement document from the `shared/{req-id}/01-requirement/raw/` directory
-2. Extract text content (support Markdown natively; for Word/PDF, use available parsing tools)
-3. Identify requirement type: [New / Iteration]
+1. **Read the requirement document** from the `shared/{req-id}/01-requirement/raw/` directory
+2. **Encoding validation**:
+   - Attempt to read the first 200 characters with UTF-8
+   - If garbled characters detected, try GBK/GB2312 and warn the user: "File encoding may be GBK. Consider converting to UTF-8 for optimal parsing."
+3. **Document size assessment**:
+   - Calculate total character count
+   - If > 15 KB: proceed to **fragmented parsing** (Step 3A)
+   - If <= 15 KB: proceed to **full parsing** (Step 3B)
+
+#### Step 3A: Fragmented Parsing (for documents > 15 KB)
+
+Large documents must be processed in fragments to avoid context window overflow:
+
+1. **Split by top-level sections** (## headers):
+   - Identify all ## sections in the document
+   - Assign each section a fragment ID (frag-001, frag-002, ...)
+2. **Parse each fragment independently**:
+   - For each fragment, extract: key fields, business rules, data sources, role permissions
+   - Generate a fragment summary (≤ 500 chars per fragment)
+3. **Handle wide tables** (> 8 columns):
+   - Convert wide Markdown tables to structured text descriptions
+   - Each row becomes: "【{角色}】权限：查询✓ 清空✓ 填写✓ ..."
+4. **Merge fragment summaries**:
+   - Combine all fragment summaries into a unified document map
+   - Identify cross-references between fragments
+5. **Proceed to Step 4** with the unified document map
+
+#### Step 3B: Full Parsing (for documents <= 15 KB)
+
+1. Extract text content (support Markdown natively; for Word/PDF, use available parsing tools)
+2. Identify requirement type: [New / Iteration]
+3. Proceed directly to Step 4
 
 ### Step 4: Generate Understanding Confirmation
 
@@ -147,12 +176,29 @@ status: draft
 2. {key capability 2}
 3. {key capability 3}
 
+## Non-Functional Requirements Checklist（新增）
+Scan the document for the following and check if applicable:
+- [ ] **Data Audit / Logging**: "留痕", "审计", "操作日志", "记录所有操作"
+- [ ] **Attachment Management**: "附件", "上传", "文件", "下载" (if checked, note: size limit, type validation, virus scan)
+- [ ] **Data Archival**: "归档", "持久化", "存储", "审计追溯"
+- [ ] **Performance Requirements**: "并发", "响应时间", "吞吐量"
+- [ ] **Security Compliance**: "数据权限", "加密", "脱敏"
+- [ ] **Version Reserve**: "预留", "后续版本", "630", "930", "迭代"
+
+## System-Level Modules Checklist（新增）
+- [ ] **Permission System**: Number of roles identified: ___. Complexity: High/Medium/Low.
+- [ ] **Code Value / Master Data**: Dropdown options, branch codes, dictionary tables identified: ___
+- [ ] **External Interfaces**: Number of external data sources (system-displayed fields): ___
+- [ ] **Notification Service**: "提醒", "弹窗", "邮件", "短信", "站内信"
+- [ ] **Report Generation**: "报告", "表单", "PDF", "Word", "导出"
+
 ## Open Questions
 - [ ] {question 1}
 - [ ] {question 2}
 
 ## Understanding Consistency Confirmation
 - [ ] Product Manager / Requirement Owner confirms AI understanding is correct
+- [ ] All Non-Functional Requirements and System-Level Modules have been reviewed
 - [ ] If there are deviations, please add below:
 ```
 
@@ -180,34 +226,153 @@ status: confirmed
 ## 1. Overview
 {Detailed description of the requirement}
 
-## 2. Business Impact
+## 2. Data Model & Field Definitions
+
+### 2.1 Data Source Inventory
+| Data Source Name | Type | Field Count | Data Origin | Manual Entry |
+|-----------------|------|-------------|-------------|--------------|
+| {source 1} | System Display / Manual | {count} | {origin table} | Yes/No |
+
+### 2.2 Key Fields Requiring Manual Entry
+List ALL fields that require manual input (not system-displayed):
+| Field Name | Control Type | Required | Code Values | Validation Rules |
+|-----------|-------------|----------|-------------|-----------------|
+| {field} | Dropdown/Text/Date | Yes/No | {values} | {rules} |
+
+### 2.3 Data Source Independence Assessment
+| Data Source | External System | Interface Complexity | Risk Level |
+|------------|----------------|---------------------|-----------|
+| {source} | {system name} | High/Medium/Low | {risk} |
+
+## 3. Business Impact
 - Affected modules: {affected modules}
 - Affected users: {affected users}
 - Business process changes: {process changes}
 
-## 3. Permissions and Compliance
+## 4. Permissions and Compliance
 - Access permissions: {access permissions}
 - Data permissions: {data permissions}
 - Compliance requirements (if any): {compliance requirements}
 
-## 4. Classification
+## 5. Classification
 - Type: [New / Iteration]
 - Priority: [P0/P1/P2/P3]
 - Urgency: [Critical/High/Medium/Low]
 
-## 5. Reference Cases
+## 6. Reference Cases
 {Industry standard case analysis}
 
-## 6. Brainstorming Notes
+## 7. Brainstorming Notes
 {Brainstorming points from AI}
 
-## 7. Risk Assessment
+## 8. Dynamic Text Generation Templates (if applicable)
+
+### 8.1 Template Inventory
+| Module | Sub-Scene | Template Example | Field Placeholders | Complexity |
+|--------|-----------|-----------------|-------------------|-----------|
+| {module} | {sub-scene} | {template text} | {count} | High/Medium/Low |
+
+### 8.2 Template Complexity Assessment
+- Total templates: {count}
+- Conditional branches: {count}
+- Field mappings: {count}
+- Business-adjustable: Yes/No
+
+## 9. Version Iteration Planning
+
+### 9.1 Current Version Scope (Explicit Exclusions)
+- Features NOT included in this version: {list}
+
+### 9.2 Reserved Requirements for Future Versions
+| Reserved Feature | Target Version | Current Version Reserves |
+|-----------------|---------------|------------------------|
+| {feature} | {version} | {data model fields / interface stubs} |
+
+## 10. Risk Assessment
 - Technical risks: {technical risks}
 - Business risks: {business risks}
 - Dependency risks: {dependency risks}
 ```
 
 ### Step 6: Generate Sub-Requirement Breakdown
+
+#### Step 6.1: Pre-Split Checklist — System-Level Modules
+
+Before splitting by business modules, scan the entire requirement for **system-level concerns** that MUST become independent sub-requirements regardless of document length:
+
+| Check Item | Trigger Keywords | If True |
+|-----------|------------------|---------|
+| **Permission System** | "角色", "权限", "岗位", "RBAC", "菜单", "按钮" | Create `subreq-permission`: permission matrix, role-menu mapping, data-scope rules |
+| **Audit Log** | "留痕", "审计", "操作日志", "记录" | Create `subreq-audit`: operation logging, data change tracking |
+| **Attachment Management** | "附件", "上传", "文件", "下载" | Create `subreq-attachment`: file upload, size/type validation, virus scan, storage |
+| **Code Value / Master Data** | "码值", "下拉框", "选项", "分行", "字典" | Create `subreq-masterdata`: code tables, dropdown options, branch codes |
+| **Version Reserve** | "预留", "后续版本", "630", "930", "迭代" | Create `subreq-reserve`: data model extension fields, interface stubs |
+| **External Interface** | "系统反显", "取【", "外围系统", "同步" | Count data sources; each independent external system interface deserves assessment |
+| **Data Archival** | "归档", "持久化", "存储", "审计追溯" | Create `subreq-archive`: report/form persistence, retention policy |
+
+**Rule**: If ANY check item is true, it MUST appear as a dedicated sub-requirement. Do NOT absorb system-level modules into business sub-requirements.
+
+#### Step 6.2: Splitting Dimension Strategy
+
+Use the following priority order. Never merge items from different dimensions unless they are trivial (< 3 fields and no independent business rules).
+
+**Priority 1 — Independent Data Source** (highest)
+- Each external system data source (customer info, contract info, guarantor info, mortgage info, pledge info) should be independently assessed for interface complexity.
+
+**Priority 2 — Independent Business Module**
+- Core business functions that have independent field definitions, business rules, or text generation templates.
+- Example: "催收/清收模块" and "抵质押物管理模块" are independent even if they appear on the same page.
+
+**Priority 3 — Independent Page / Entry Point**
+- Pages with different query conditions, visible fields, or button permissions must NOT be merged.
+- **NEVER merge**: 录入列表页 + 查看列表页 (different visible fields)
+- **NEVER merge**: 审批列表页 + 审批提交弹窗 (different responsibilities)
+- **NEVER merge**: 抵押信息 + 质押信息 (different data sources)
+
+**Priority 4 — System-Level Service**
+- Permission, audit, attachment, code-value, archival services.
+
+**Priority 5 — User Role**
+- If a feature set is completely different per role (e.g., 清收管户人 vs 审批人 vs 查看人), consider role-based split.
+
+#### Step 6.3: Granularity Rules
+
+```
+Document Size (raw)    →    Expected Sub-Requirement Count
+-------------------------------------------------------------
+< 5 KB                 →    3 - 5
+5 - 15 KB              →    5 - 10
+15 - 30 KB             →    10 - 15
+30 - 50 KB             →    15 - 25
+> 50 KB                →    25+ (consider epic-level grouping)
+
+Additional Rules:
+- Each sub-requirement description should be < 1.5 KB. If longer, split further.
+- Each sub-requirement should map to ≤ 1 independent business module OR 1 independent data source.
+- System-level sub-requirements are counted separately and do not reduce business sub-requirement quotas.
+```
+
+#### Step 6.4: Composite Module Special Handling
+
+For modules that contain multiple sub-scenes (e.g., "处置进展" containing 7 sub-scenes):
+
+**Split if ANY of the following is true**:
+- The sub-scene has > 3 independent fields with business rules
+- The sub-scene has its own dynamic text generation template
+- The sub-scene has special data rules (e.g., "past data read-only")
+- The sub-scene involves a different business process (e.g., "转让进度" has 8 sequential steps)
+
+**Example from 不良资产 tracking**:
+- "处置进展" should NOT be one sub-requirement. It should be split into:
+  - subreq-XX1: 诉讼进展
+  - subreq-XX2: 核销条件
+  - subreq-XX3: 转让进度 (8 steps: communication → assessment → approval → listing → signing → accounting → announcement → handover)
+  - subreq-XX4: 债委会进展 (10+ fields, past data read-only)
+  - subreq-XX5: 破产程序进展 (15+ fields, court/administrator process)
+  - subreq-XX6: 下一步计划
+  - subreq-XX7: 其他说明
+
+#### Step 6.5: Generate subreq-breakdown.md
 
 Create `subreq-breakdown.md` in `shared/{req-id}/01-requirement/`:
 
@@ -257,7 +422,7 @@ subreq-002 → subreq-003
 | subreq-002 | {user} | {frontend/backend/fullstack} |
 ```
 
-**Granularity rule**: Each sub-requirement must be independently actionable for the technical-design phase.
+**Granularity rule**: Each sub-requirement must be independently actionable for the technical-design phase. If a sub-requirement description exceeds 1.5 KB or covers more than one independent business module / data source, it MUST be split further.
 
 **Owner assignment**: If the user has not specified owners, leave the Owner field as `TBD` and prompt the user to assign.
 
